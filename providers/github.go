@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type GitHubProvider struct {
 	*ProviderData
-	Org  string
-	Team string
+	Org     string
+	Team    string
+	BaseUrl string
 }
 
 func NewGitHubProvider(p *ProviderData) *GitHubProvider {
@@ -51,6 +53,16 @@ func (p *GitHubProvider) SetOrgTeam(org, team string) {
 	}
 }
 
+func (p *GitHubProvider) SetBaseUrl(uri string) {
+	// Expecting BaseUrl to be https://github.<domain>/api/v3/
+	p.BaseUrl = uri
+	if len(p.BaseUrl) <= 0 {
+		p.BaseUrl = fmt.Sprintf("%s://%s/", p.ValidateURL.Scheme, p.ValidateURL.Host)
+	} else if !strings.HasSuffix(p.BaseUrl, "/") {
+		p.BaseUrl = fmt.Sprintf("%s/", p.BaseUrl)
+	}
+}
+
 func (p *GitHubProvider) hasOrg(accessToken string) (bool, error) {
 	// https://developer.github.com/v3/orgs/#list-your-organizations
 
@@ -62,8 +74,7 @@ func (p *GitHubProvider) hasOrg(accessToken string) (bool, error) {
 		"access_token": {accessToken},
 		"limit":        {"100"},
 	}
-
-	endpoint := p.ValidateURL.Scheme + "://"  + p.ValidateURL.Host + "/user/orgs?" + params.Encode()
+	endpoint := p.getEndpoint("user/orgs", params)
 	req, _ := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	resp, err := http.DefaultClient.Do(req)
@@ -112,8 +123,7 @@ func (p *GitHubProvider) hasOrgAndTeam(accessToken string) (bool, error) {
 		"access_token": {accessToken},
 		"limit":        {"100"},
 	}
-
-	endpoint := p.ValidateURL.Scheme + "://" + p.ValidateURL.Host + "/user/teams?" + params.Encode()
+	endpoint := p.getEndpoint("user/teams", params)
 	req, _ := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	resp, err := http.DefaultClient.Do(req)
@@ -183,7 +193,7 @@ func (p *GitHubProvider) GetEmailAddress(s *SessionState) (string, error) {
 	params := url.Values{
 		"access_token": {s.AccessToken},
 	}
-	endpoint := p.ValidateURL.Scheme + "://" + p.ValidateURL.Host + p.ValidateURL.Path + "?" + params.Encode()
+	endpoint := fmt.Sprintf("%s?%s", p.ValidateURL.String(), params.Encode())
 	resp, err := http.DefaultClient.Get(endpoint)
 	if err != nil {
 		return "", err
@@ -211,4 +221,8 @@ func (p *GitHubProvider) GetEmailAddress(s *SessionState) (string, error) {
 	}
 
 	return "", nil
+}
+
+func (p *GitHubProvider) getEndpoint(path string, params url.Values) string {
+	return fmt.Sprintf("%s%s?%s", p.BaseUrl, path, params.Encode())
 }
