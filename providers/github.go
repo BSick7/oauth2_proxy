@@ -12,9 +12,9 @@ import (
 
 type GitHubProvider struct {
 	*ProviderData
-	Org     string
-	Team    string
-	BaseUrl string
+	Org    string
+	Team   string
+	ApiUrl string
 }
 
 func NewGitHubProvider(p *ProviderData) *GitHubProvider {
@@ -53,13 +53,13 @@ func (p *GitHubProvider) SetOrgTeam(org, team string) {
 	}
 }
 
-func (p *GitHubProvider) SetBaseUrl(uri string) {
+func (p *GitHubProvider) SetApiUrl(uri string) {
 	// Expecting BaseUrl to be https://github.<domain>/api/v3/
-	p.BaseUrl = uri
-	if len(p.BaseUrl) <= 0 {
-		p.BaseUrl = fmt.Sprintf("%s://%s/", p.ValidateURL.Scheme, p.ValidateURL.Host)
-	} else if !strings.HasSuffix(p.BaseUrl, "/") {
-		p.BaseUrl = fmt.Sprintf("%s/", p.BaseUrl)
+	p.ApiUrl = uri
+	if len(p.ApiUrl) <= 0 {
+		p.ApiUrl = fmt.Sprintf("%s://%s/", p.ValidateURL.Scheme, p.ValidateURL.Host)
+	} else if !strings.HasSuffix(p.ApiUrl, "/") {
+		p.ApiUrl = fmt.Sprintf("%s/", p.ApiUrl)
 	}
 }
 
@@ -224,5 +224,5 @@ func (p *GitHubProvider) GetEmailAddress(s *SessionState) (string, error) {
 }
 
 func (p *GitHubProvider) getEndpoint(path string, params url.Values) string {
-	return fmt.Sprintf("%s%s?%s", p.BaseUrl, path, params.Encode())
+	return fmt.Sprintf("%s%s?%s", p.ApiUrl, path, params.Encode())
 }

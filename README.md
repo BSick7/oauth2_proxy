@@ -88,7 +88,7 @@ The GitHub auth provider supports two additional parameters to restrict authenti
 
 If you are using github enterprise, make sure you set the following to the appropriate url:
 
-    -github-base-url="https://<github domain>/api/v3/"
+    -github-api-url="https://<github domain>/api/v3/"
     -login-url="<enterprise github url>/login/oauth/authorize"
     -redeem-url="<enterprise github url>/login/oauth/access_token"
     -validate-url="<enterprise github api url>/user/emails"
