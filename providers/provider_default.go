@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/bitly/oauth2_proxy/cookie"
+	"log"
 )
 
 func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err error) {
@@ -60,6 +61,7 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 		}
 		return
 	}
+	log.Printf("Error parsing json response: [%s]\n%s", err, body)
 
 	var v url.Values
 	v, err = url.ParseQuery(string(body))
