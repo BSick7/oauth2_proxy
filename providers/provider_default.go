@@ -15,6 +15,7 @@ import (
 )
 
 func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err error) {
+	log.Printf("Redeem")
 	if code == "" {
 		err = errors.New("missing code")
 		return
@@ -29,23 +30,20 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	var req *http.Request
 	req, err = http.NewRequest("POST", p.RedeemURL.String(), bytes.NewBufferString(params.Encode()))
 	if err != nil {
-		log.Printf("error making redemption request %s", err)
-		return
+		return errors.New(fmt.Sprintf("error making redemption request: %s", err))
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("error receiving redemption response %s", err)
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("error receiving redemption response %s", err))
 	}
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Printf("error reading redemption response body %s", err)
-		return
+		return nil, errors.New(fmt.Sprintf("error reading redemption response body %s", err))
 	}
 
 	if resp.StatusCode != 200 {
@@ -64,12 +62,12 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 		}
 		return
 	}
-	log.Printf("error parsing json response: [%s]\n%s", err, body)
+	err = errors.New(fmt.Sprintf("error parsing json response [%s] %s", err, body))
 
 	var v url.Values
 	v, err = url.ParseQuery(string(body))
 	if err != nil {
-		return
+		return errors.New(fmt.Sprintf("error parsing redemption query body [%s] %s", err, body))
 	}
 	if a := v.Get("access_token"); a != "" {
 		s = &SessionState{AccessToken: a}
