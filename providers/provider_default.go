@@ -30,20 +30,23 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	var req *http.Request
 	req, err = http.NewRequest("POST", p.RedeemURL.String(), bytes.NewBufferString(params.Encode()))
 	if err != nil {
-		return errors.New(fmt.Sprintf("error making redemption request: %s", err))
+		err = errors.New(fmt.Sprintf("error making redemption request: %s", err))
+		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error receiving redemption response %s", err))
+		err = errors.New(fmt.Sprintf("error receiving redemption response %s", err))
+		return
 	}
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error reading redemption response body %s", err))
+		err = errors.New(fmt.Sprintf("error reading redemption response body %s", err))
+		return
 	}
 
 	if resp.StatusCode != 200 {
@@ -67,7 +70,8 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	var v url.Values
 	v, err = url.ParseQuery(string(body))
 	if err != nil {
-		return errors.New(fmt.Sprintf("error parsing redemption query body [%s] %s", err, body))
+		err = errors.New(fmt.Sprintf("error parsing redemption query body [%s] %s", err, body))
+		return
 	}
 	if a := v.Get("access_token"); a != "" {
 		s = &SessionState{AccessToken: a}
