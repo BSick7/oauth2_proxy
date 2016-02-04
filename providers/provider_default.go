@@ -29,6 +29,7 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	var req *http.Request
 	req, err = http.NewRequest("POST", p.RedeemURL.String(), bytes.NewBufferString(params.Encode()))
 	if err != nil {
+		log.Printf("error making redemption request %s", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -36,12 +37,14 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
+		log.Printf("error receiving redemption response %s", err)
 		return nil, err
 	}
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
+		log.Printf("error reading redemption response body %s", err)
 		return
 	}
 
@@ -61,7 +64,7 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 		}
 		return
 	}
-	log.Printf("Error parsing json response: [%s]\n%s", err, body)
+	log.Printf("error parsing json response: [%s]\n%s", err, body)
 
 	var v url.Values
 	v, err = url.ParseQuery(string(body))
